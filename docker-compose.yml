@@ -1,0 +1,54 @@
+services:
+    web:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        ports:
+            -   "80:80"
+        depends_on:
+            -   db
+        volumes:
+            -   "./:/var/www/html"
+    vite:
+        image: node:22
+        user: "node"
+        working_dir: /home/node/app
+        environment:
+            - NODE_ENV=development
+        volumes:
+            - "./:/home/node/app"
+        expose:
+            - "5173"
+        ports: # use if it is necessary to expose the container to the host machine
+            - "5173:5173"
+        command: "npm run dev"
+        depends_on:
+            -   web
+    db:
+        image: postgres:17.2
+        restart: always
+        ports:
+            - "5432:5432"
+        environment:
+            - POSTGRES_PASSWORD=${DB_PASSWORD}
+            - POSTGRES_USER=${DB_USERNAME}
+            - POSTGRES_DB=${DB_DATABASE}
+        volumes:
+            -   "db:/var/lib/postgresql/data"
+    adminer:
+        image: adminer
+        restart: always
+        ports:
+            - "8080:8080"
+        depends_on:
+            -   db
+    mailhog:
+        image: mailhog/mailhog
+        ports:
+            -   "1025:1025"
+            -   "8025:8025"
+    redis:
+        image: redis
+volumes:
+    db:
+        driver: local
